@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -68,7 +67,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				originalUrl: string(body),
 				shortUrl:    encodedUrl,
 			})
-			fmt.Println("test")
 			w.WriteHeader(http.StatusCreated)
 			w.Write([]byte(encodedUrl))
 		}

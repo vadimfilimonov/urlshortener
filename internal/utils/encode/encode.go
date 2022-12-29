@@ -1,12 +1,23 @@
 package encode
 
 import (
-	"fmt"
 	"math/rand"
 )
 
+const letters = "abcdefghijklmnopqrstuvwxyz"
+const lettersSize = 26
+
+const maxSizeOfEncodedText = 6
+
 func Encode(text string) string {
-	encodedText := fmt.Sprint(rand.Int63n(1000))
+	encodedText := ""
+
+	for i := 0; i < maxSizeOfEncodedText; i += 1 {
+		index := rand.Int63n(lettersSize - 1)
+		letter := letters[index]
+
+		encodedText += string(letter)
+	}
 
 	return encodedText
 }
