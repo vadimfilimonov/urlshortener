@@ -1,11 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
-	"github.com/VadimFilimonov/urlshortener/internal/utils/encode"
+	"github.com/VadimFilimonov/urlshortener/internal/utils/shortstring"
 )
 
 type DataItem struct {
@@ -46,9 +47,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			slices := strings.Split(path, "/")
 			id := slices[len(slices)-1]
 			dataItem, isDataItemExist := data.Get(id)
+			fmt.Println(path)
 
 			if !isDataItemExist {
-				http.Error(w, "Incorrect Id", http.StatusNotFound)
+				http.Error(w, "Incorrect Id", http.StatusBadRequest)
 				return
 			}
 
@@ -62,13 +64,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			encodedUrl := encode.Encode(string(body))
+			shortUrl := shortstring.Generate()
 			data.Add(DataItem{
 				originalUrl: string(body),
-				shortUrl:    encodedUrl,
+				shortUrl:    shortUrl,
 			})
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(encodedUrl))
+			w.Write([]byte(shortUrl))
 		}
 	}
 }
