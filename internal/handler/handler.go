@@ -9,17 +9,15 @@ import (
 	"github.com/VadimFilimonov/urlshortener/internal/utils/shortstring"
 )
 
-var data = storage.New()
-
-func New() func(http.ResponseWriter, *http.Request) {
+func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
 	h := func(w http.ResponseWriter, r *http.Request) {
-		Handler(w, r)
+		Handler(w, r, data)
 	}
 
 	return h
 }
 
-func Handler(w http.ResponseWriter, r *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request, data storage.Data) {
 	switch r.Method {
 	case http.MethodGet:
 		{
