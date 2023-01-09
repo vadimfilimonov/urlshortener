@@ -1,37 +1,22 @@
 package handler
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
+	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	"github.com/VadimFilimonov/urlshortener/internal/utils/shortstring"
 )
 
-type DataItem struct {
-	originalURL string
-	shortURL    string
-}
+var data = storage.New()
 
-type Data struct {
-	list map[string]DataItem
-}
+func New() func(http.ResponseWriter, *http.Request) {
+	h := func(w http.ResponseWriter, r *http.Request) {
+		Handler(w, r)
+	}
 
-func (d Data) Get(id string) (DataItem, bool) {
-	dataItem, ok := d.list[id]
-	return dataItem, ok
-}
-
-func (d Data) Add(dataItem DataItem) bool {
-	id := dataItem.shortURL
-	d.list[id] = dataItem
-
-	return true
-}
-
-var data = Data{
-	list: map[string]DataItem{},
+	return h
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -40,21 +25,22 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		{
 			path := r.URL.Path
 			isURLEmpty := path == "/"
+
 			if isURLEmpty {
 				http.Error(w, "Empty URL", http.StatusBadRequest)
 				return
 			}
+
 			slices := strings.Split(path, "/")
 			id := slices[len(slices)-1]
-			dataItem, isDataItemExist := data.Get(id)
-			fmt.Println(path)
+			originalURL, isDataItemExist := data.Get(id)
 
 			if !isDataItemExist {
 				http.Error(w, "Incorrect Id", http.StatusBadRequest)
 				return
 			}
 
-			w.Header().Set("Location", dataItem.originalURL)
+			w.Header().Set("Location", originalURL)
 			w.WriteHeader(http.StatusTemporaryRedirect)
 		}
 	case http.MethodPost:
@@ -65,10 +51,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			shortURL := shortstring.Generate()
-			data.Add(DataItem{
-				originalURL: string(body),
-				shortURL:    shortURL,
-			})
+			data.Add(string(body), shortURL)
 			w.WriteHeader(http.StatusCreated)
 			w.Write([]byte(shortURL))
 		}
