@@ -10,8 +10,8 @@ import (
 )
 
 type DataItem struct {
-	originalUrl string
-	shortUrl    string
+	originalURL string
+	shortURL    string
 }
 
 type Data struct {
@@ -24,7 +24,7 @@ func (d Data) Get(id string) (DataItem, bool) {
 }
 
 func (d Data) Add(dataItem DataItem) bool {
-	id := dataItem.shortUrl
+	id := dataItem.shortURL
 	d.list[id] = dataItem
 
 	return true
@@ -39,8 +39,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		{
 			path := r.URL.Path
-			isUrlEmpty := path == "/"
-			if isUrlEmpty {
+			isURLEmpty := path == "/"
+			if isURLEmpty {
 				http.Error(w, "Empty URL", http.StatusBadRequest)
 				return
 			}
@@ -54,7 +54,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			w.Header().Set("Location", dataItem.originalUrl)
+			w.Header().Set("Location", dataItem.originalURL)
 			w.WriteHeader(http.StatusTemporaryRedirect)
 		}
 	case http.MethodPost:
@@ -64,13 +64,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			shortUrl := shortstring.Generate()
+			shortURL := shortstring.Generate()
 			data.Add(DataItem{
-				originalUrl: string(body),
-				shortUrl:    shortUrl,
+				originalURL: string(body),
+				shortURL:    shortURL,
 			})
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(shortUrl))
+			w.Write([]byte(shortURL))
 		}
 	}
 }
