@@ -1,5 +1,7 @@
 package storage
 
+import "errors"
+
 type DataItem struct {
 	originalURL string
 	shortURL    string
@@ -15,9 +17,14 @@ func New() Data {
 	}
 }
 
-func (d Data) Get(id string) (string, bool) {
+func (d Data) Get(id string) (string, error) {
 	dataItem, ok := d.list[id]
-	return dataItem.originalURL, ok
+
+	if !ok {
+		return "", errors.New("incorrect id")
+	}
+
+	return dataItem.originalURL, nil
 }
 
 func (d Data) Add(originalURL, shortURL string) bool {

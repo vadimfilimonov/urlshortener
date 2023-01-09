@@ -31,10 +31,10 @@ func Handler(w http.ResponseWriter, r *http.Request, data storage.Data) {
 
 			slices := strings.Split(path, "/")
 			id := slices[len(slices)-1]
-			originalURL, isDataItemExist := data.Get(id)
+			originalURL, err := data.Get(id)
 
-			if !isDataItemExist {
-				http.Error(w, "Incorrect Id", http.StatusBadRequest)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
