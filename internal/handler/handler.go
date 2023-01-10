@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -48,8 +49,11 @@ func Handler(w http.ResponseWriter, r *http.Request, data storage.Data) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			shortURL := shortstring.Generate()
-			data.Add(string(body), shortURL)
+			id := shortstring.Generate()
+			shortURL := fmt.Sprintf("https://localhost/%s", id)
+
+			data.Add(string(body), id)
+
 			w.WriteHeader(http.StatusCreated)
 			w.Write([]byte(shortURL))
 		}
