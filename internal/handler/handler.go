@@ -50,7 +50,7 @@ func Handler(w http.ResponseWriter, r *http.Request, data storage.Data) {
 				return
 			}
 			id := shortstring.Generate()
-			shortURL := fmt.Sprintf("http://localhost/%s", id)
+			shortURL := fmt.Sprintf("http://localhost:8080/%s", id)
 
 			data.Add(string(body), id)
 
