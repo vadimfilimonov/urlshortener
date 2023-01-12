@@ -3,3 +3,9 @@ start:
 
 lint:
 	go vet ./...
+
+test:
+	go test ./...
+
+test-coverage:
+	go test ./... -cover
