@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
+	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -19,17 +19,15 @@ func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			{
-				path := r.URL.Path
-				isURLEmpty := path == "/"
+				shortURL := chi.URLParam(r, "shortURL")
+
+				isURLEmpty := shortURL == ""
 
 				if isURLEmpty {
-					http.Error(w, "Empty URL", http.StatusBadRequest)
+					http.Error(w, "shortURL param is missed", http.StatusBadRequest)
 					return
 				}
-
-				slices := strings.Split(path, "/")
-				id := slices[len(slices)-1]
-				originalURL, err := data.Get(id)
+				originalURL, err := data.Get(shortURL)
 
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)

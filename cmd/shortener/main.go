@@ -5,9 +5,13 @@ import (
 
 	"github.com/VadimFilimonov/urlshortener/internal/handler"
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	http.HandleFunc("/", handler.New(storage.New()))
-	http.ListenAndServe(":8080", nil)
+	r := chi.NewRouter()
+	data := storage.New()
+	r.Get("/{shortURL}", handler.New(data))
+	r.Post("/", handler.New(data))
+	http.ListenAndServe(":8080", r)
 }
