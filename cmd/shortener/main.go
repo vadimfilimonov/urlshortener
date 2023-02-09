@@ -13,5 +13,6 @@ func main() {
 	data := storage.New()
 	r.Get("/{shortURL}", handler.New(data))
 	r.Post("/", handler.New(data))
+	r.Post("/api/shorten", handler.NewShorten(data))
 	http.ListenAndServe(":8080", r)
 }

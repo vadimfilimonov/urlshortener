@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -53,6 +54,55 @@ func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
 
 				w.WriteHeader(http.StatusCreated)
 				w.Write([]byte(shortURL))
+			}
+		}
+	}
+}
+
+type Input struct {
+	Url string `json:"url"`
+}
+
+type Output struct {
+	Result string `json:"result"`
+}
+
+func NewShorten(data storage.Data) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			{
+				body, err := io.ReadAll(r.Body)
+
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				id := utils.GenerateID()
+				shortURL := fmt.Sprintf("%s/%s", Host, id)
+
+				input := Input{}
+				err = json.Unmarshal([]byte(body), &input)
+
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				output, err := json.Marshal(Output{
+					Result: shortURL,
+				})
+
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				data.Add(input.Url, id)
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusCreated)
+				w.Write([]byte(output))
 			}
 		}
 	}
