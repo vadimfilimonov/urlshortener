@@ -60,7 +60,7 @@ func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
 }
 
 type Input struct {
-	Url string `json:"url"`
+	URL string `json:"url"`
 }
 
 type Output struct {
@@ -99,7 +99,7 @@ func NewShorten(data storage.Data) func(http.ResponseWriter, *http.Request) {
 					return
 				}
 
-				data.Add(input.Url, id)
+				data.Add(input.URL, id)
 				w.Header().Add("Content-Type", "application/json")
 				w.WriteHeader(http.StatusCreated)
 				w.Write([]byte(output))
