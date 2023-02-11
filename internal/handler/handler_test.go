@@ -18,9 +18,6 @@ const (
 )
 
 func TestNew(t *testing.T) {
-	config := Config{
-		ServerAddress: Host,
-	}
 	tests := []struct {
 		name       string
 		request    string
@@ -55,7 +52,7 @@ func TestNew(t *testing.T) {
 			body := strings.NewReader(tt.body)
 			request := httptest.NewRequest(tt.method, tt.request, body)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(New(storage.New(), config))
+			h := http.HandlerFunc(New(storage.New(), tt.request))
 			h.ServeHTTP(w, request)
 
 			result := w.Result()
@@ -70,9 +67,6 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewShorten(t *testing.T) {
-	config := Config{
-		ServerAddress: Host,
-	}
 	tests := []struct {
 		name       string
 		body       string
@@ -95,7 +89,7 @@ func TestNewShorten(t *testing.T) {
 			body := strings.NewReader(tt.body)
 			request := httptest.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/shorten", Host), body)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(NewShorten(storage.New(), config))
+			h := http.HandlerFunc(NewShorten(storage.New(), Host))
 			h.ServeHTTP(w, request)
 
 			result := w.Result()

@@ -2,21 +2,16 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 	"github.com/go-chi/chi/v5"
 )
 
-type Config struct {
-	ServerAddress string `env:"SERVER_ADDRESS" envDefault:"localhost:8080"`
-	BaseURL       string `env:"BASE_URL"`
-}
-
-func New(data storage.Data, config Config) func(http.ResponseWriter, *http.Request) {
+func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -49,13 +44,7 @@ func New(data storage.Data, config Config) func(http.ResponseWriter, *http.Reque
 				}
 
 				id := utils.GenerateID()
-				pathParts := make([]string, 0)
-				pathParts = append(pathParts, config.ServerAddress)
-				if config.BaseURL != "" {
-					pathParts = append(pathParts, config.BaseURL)
-				}
-				pathParts = append(pathParts, id)
-				shortURL := "http://" + strings.Join(pathParts, "/")
+				shortURL := fmt.Sprintf("%s/%s", host, id)
 
 				data.Add(string(body), id)
 
@@ -74,7 +63,7 @@ type Output struct {
 	Result string `json:"result"`
 }
 
-func NewShorten(data storage.Data, config Config) func(http.ResponseWriter, *http.Request) {
+func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -87,13 +76,7 @@ func NewShorten(data storage.Data, config Config) func(http.ResponseWriter, *htt
 				}
 
 				id := utils.GenerateID()
-				pathParts := make([]string, 0)
-				pathParts = append(pathParts, config.ServerAddress)
-				if config.BaseURL != "" {
-					pathParts = append(pathParts, config.BaseURL)
-				}
-				pathParts = append(pathParts, id)
-				shortURL := "http://" + strings.Join(pathParts, "/")
+				shortURL := fmt.Sprintf("%s/%s", host, id)
 
 				input := Input{}
 				err = json.Unmarshal([]byte(body), &input)
