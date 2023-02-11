@@ -2,36 +2,28 @@ package storage
 
 import "errors"
 
-type DataItem struct {
-	originalURL string
-	shortURL    string
-}
-
 type Data struct {
-	list map[string]DataItem
+	URLs map[string]string
 }
 
 func New() Data {
 	return Data{
-		list: map[string]DataItem{},
+		URLs: map[string]string{},
 	}
 }
 
-func (d Data) Get(id string) (string, error) {
-	dataItem, ok := d.list[id]
+func (d Data) Get(shortenURL string) (string, error) {
+	originalURL, ok := d.URLs[shortenURL]
 
 	if !ok {
-		return "", errors.New("incorrect id")
+		return "", errors.New("incorrect shortenURL")
 	}
 
-	return dataItem.originalURL, nil
+	return originalURL, nil
 }
 
-func (d Data) Add(originalURL, shortURL string) bool {
-	d.list[shortURL] = DataItem{
-		shortURL:    shortURL,
-		originalURL: originalURL,
-	}
+func (d Data) Add(originalURL, shortenURL string) bool {
+	d.URLs[shortenURL] = originalURL
 
 	return true
 }
