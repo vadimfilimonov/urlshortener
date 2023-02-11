@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	env "github.com/caarlos0/env/v6"
@@ -11,27 +10,33 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	Host string = "localhost:8080"
+)
+
 type Config struct {
 	ServerAddress string `env:"SERVER_ADDRESS"`
 	BaseURL       string `env:"BASE_URL"`
 }
 
 func main() {
-	config := Config{}
+	config := Config{
+		ServerAddress: Host,
+		BaseURL:       "http://" + Host,
+	}
 	err := env.Parse(&config)
 
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(config)
 
 	r := chi.NewRouter()
 	data := storage.New()
 
-	r.Get("/{shortURL}", handler.New(data))
-	r.Post("/", handler.New(data))
-	r.Post("/api/shorten", handler.NewShorten(data))
-	err = http.ListenAndServe(config.ServerAddress+":8080", r)
+	r.Get("/{shortURL}", handler.New(data, config.BaseURL))
+	r.Post("/", handler.New(data, config.BaseURL))
+	r.Post("/api/shorten", handler.NewShorten(data, config.BaseURL))
+	err = http.ListenAndServe(config.ServerAddress, r)
 
 	if err != nil {
 		panic(err)

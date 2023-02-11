@@ -11,11 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-const (
-	Host string = "http://localhost:8080"
-)
-
-func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
+func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -48,7 +44,7 @@ func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
 				}
 
 				id := utils.GenerateID()
-				shortURL := fmt.Sprintf("%s/%s", Host, id)
+				shortURL := fmt.Sprintf("%s/%s", host, id)
 
 				data.Add(string(body), id)
 
@@ -67,7 +63,7 @@ type Output struct {
 	Result string `json:"result"`
 }
 
-func NewShorten(data storage.Data) func(http.ResponseWriter, *http.Request) {
+func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -80,7 +76,7 @@ func NewShorten(data storage.Data) func(http.ResponseWriter, *http.Request) {
 				}
 
 				id := utils.GenerateID()
-				shortURL := fmt.Sprintf("%s/%s", Host, id)
+				shortURL := fmt.Sprintf("%s/%s", host, id)
 
 				input := Input{}
 				err = json.Unmarshal([]byte(body), &input)
