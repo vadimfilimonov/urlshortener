@@ -32,7 +32,7 @@ func main() {
 	}
 
 	r := chi.NewRouter()
-	data := storage.New()
+	data := storage.New(config.FileStoragePath)
 
 	r.Get("/{shortURL}", handler.New(data, config.BaseURL))
 	r.Post("/", handler.New(data, config.BaseURL))
