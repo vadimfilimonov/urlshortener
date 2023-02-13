@@ -1,8 +1,11 @@
 package main
 
 import (
+	"compress/gzip"
 	"flag"
+	"io"
 	"net/http"
+	"strings"
 
 	env "github.com/caarlos0/env/v6"
 
@@ -47,6 +50,7 @@ func main() {
 	}
 
 	r := chi.NewRouter()
+	r.Use(compressMiddleware)
 	data := storage.New(config.FileStoragePath)
 
 	r.Get("/{shortURL}", handler.New(data, config.BaseURL))
@@ -57,4 +61,32 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+type writer struct {
+	http.ResponseWriter
+	Writer io.Writer
+}
+
+func (w writer) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+func compressMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
+		if err != nil {
+			io.WriteString(w, err.Error())
+			return
+		}
+		defer gz.Close()
+
+		w.Header().Set("Content-Encoding", "gzip")
+		next.ServeHTTP(writer{ResponseWriter: w, Writer: gz}, r)
+	})
 }
