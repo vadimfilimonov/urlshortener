@@ -9,6 +9,7 @@ import (
 	"github.com/VadimFilimonov/urlshortener/internal/handler"
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -47,6 +48,7 @@ func main() {
 	}
 
 	r := chi.NewRouter()
+	r.Use(middleware.Compress(5))
 	data := storage.New(config.FileStoragePath)
 
 	r.Get("/{shortURL}", handler.New(data, config.BaseURL))
