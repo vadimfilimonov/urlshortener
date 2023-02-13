@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net/http"
 
 	env "github.com/caarlos0/env/v6"
@@ -21,14 +22,28 @@ type Config struct {
 }
 
 func main() {
-	config := Config{
-		ServerAddress: Host,
-		BaseURL:       "http://" + Host,
-	}
+	config := Config{}
 	err := env.Parse(&config)
 
 	if err != nil {
 		panic(err)
+	}
+
+	serverAddress := flag.String("a", Host, "адрес запуска HTTP-сервера")
+	BaseURL := flag.String("b", "http://"+Host, "базовый адрес результирующего сокращённого URL")
+	FileStoragePath := flag.String("f", "", "путь до файла с сокращёнными URL")
+	flag.Parse()
+
+	if config.ServerAddress == "" {
+		config.ServerAddress = *serverAddress
+	}
+
+	if config.BaseURL == "" {
+		config.BaseURL = *BaseURL
+	}
+
+	if config.FileStoragePath == "" {
+		config.FileStoragePath = *FileStoragePath
 	}
 
 	r := chi.NewRouter()
