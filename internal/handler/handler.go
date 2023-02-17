@@ -65,41 +65,36 @@ type Output struct {
 
 func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			{
-				body, err := io.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				id := utils.GenerateID()
-				shortURL := fmt.Sprintf("%s/%s", host, id)
-
-				input := Input{}
-				err = json.Unmarshal([]byte(body), &input)
-
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-
-				output, err := json.Marshal(Output{
-					Result: shortURL,
-				})
-
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				data.Add(input.URL, id)
-				w.Header().Add("Content-Type", "application/json")
-				w.WriteHeader(http.StatusCreated)
-				w.Write([]byte(output))
-			}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+
+		id := utils.GenerateID()
+		shortURL := fmt.Sprintf("%s/%s", host, id)
+
+		input := Input{}
+		err = json.Unmarshal([]byte(body), &input)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		output, err := json.Marshal(Output{
+			Result: shortURL,
+		})
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		data.Add(input.URL, id)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(output))
 	}
 }
