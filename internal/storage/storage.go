@@ -15,7 +15,7 @@ type Data struct {
 
 func New(filename string) Data {
 	if filename != "" {
-		file, _ := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
+		file, _ := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		file.Close()
 	}
 
