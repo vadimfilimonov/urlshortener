@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"flag"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -31,7 +32,7 @@ func main() {
 	err := env.Parse(&config)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	serverAddress := flag.String("a", Host, "адрес запуска HTTP-сервера")
