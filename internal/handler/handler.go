@@ -37,6 +37,7 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 		case http.MethodPost:
 			{
 				body, err := io.ReadAll(r.Body)
+				defer r.Body.Close()
 
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
