@@ -17,10 +17,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-const (
-	Host string = "localhost:8080"
-)
-
 type Config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS"`
 	BaseURL         string `env:"BASE_URL"`
@@ -35,8 +31,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	serverAddress := flag.String("a", Host, "адрес запуска HTTP-сервера")
-	BaseURL := flag.String("b", "http://"+Host, "базовый адрес результирующего сокращённого URL")
+	serverAddress := flag.String("a", "localhost:8080", "адрес запуска HTTP-сервера")
+	BaseURL := flag.String("b", "http://localhost:8080", "базовый адрес результирующего сокращённого URL")
 	FileStoragePath := flag.String("f", "", "путь до файла с сокращёнными URL")
 	flag.Parse()
 
