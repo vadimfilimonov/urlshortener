@@ -1,37 +1,87 @@
 package storage
 
-import "errors"
-
-type DataItem struct {
-	originalURL string
-	shortURL    string
-}
+import (
+	"bufio"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+)
 
 type Data struct {
-	list map[string]DataItem
+	filename string
+	URLs     map[string]string
 }
 
-func New() Data {
+func New(filename string) Data {
+	if filename != "" {
+		file, _ := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		file.Close()
+	}
+
 	return Data{
-		list: map[string]DataItem{},
+		filename: filename,
+		URLs:     map[string]string{},
 	}
 }
 
-func (d Data) Get(id string) (string, error) {
-	dataItem, ok := d.list[id]
+func (d Data) Get(shortenURL string) (string, error) {
+	if d.filename == "" {
+		originalURL, ok := d.URLs[shortenURL]
 
-	if !ok {
-		return "", errors.New("incorrect id")
+		if !ok {
+			return "", errors.New("incorrect shortenURL")
+		}
+
+		return originalURL, nil
 	}
 
-	return dataItem.originalURL, nil
+	data, err := os.ReadFile(d.filename)
+
+	if err != nil {
+		return "", err
+	}
+
+	rows := strings.Split(string(data), "\n")
+	var originalURL string
+
+	for _, row := range rows {
+		if strings.Contains(row, shortenURL) {
+			urls := strings.Split(row, " ")
+			originalURL = urls[1]
+			break
+		}
+	}
+
+	if originalURL == "" {
+		return "", errors.New("incorrect shortenURL")
+	}
+
+	return originalURL, nil
 }
 
-func (d Data) Add(originalURL, shortURL string) bool {
-	d.list[shortURL] = DataItem{
-		shortURL:    shortURL,
-		originalURL: originalURL,
+func (d Data) Add(originalURL, shortenURL string) bool {
+	shouldSaveURLsToMemory := d.filename == ""
+
+	if shouldSaveURLsToMemory {
+		d.URLs[shortenURL] = originalURL
+		return true
 	}
 
-	return true
+	file, err := os.OpenFile(d.filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
+	if err != nil {
+		return false
+	}
+	writer := bufio.NewWriter(file)
+	data := fmt.Sprintf("%s %s\n", shortenURL, originalURL)
+	_, err = writer.Write([]byte(data))
+
+	if err != nil {
+		return false
+	}
+
+	err = writer.Flush()
+	file.Close()
+
+	return err == nil
 }

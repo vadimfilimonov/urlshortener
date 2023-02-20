@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,11 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-const (
-	Host string = "http://localhost:8080"
-)
-
-func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
+func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -40,6 +37,7 @@ func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
 		case http.MethodPost:
 			{
 				body, err := io.ReadAll(r.Body)
+				defer r.Body.Close()
 
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -47,7 +45,7 @@ func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
 				}
 
 				id := utils.GenerateID()
-				shortURL := fmt.Sprintf("%s/%s", Host, id)
+				shortURL := fmt.Sprintf("%s/%s", host, id)
 
 				data.Add(string(body), id)
 
@@ -55,5 +53,49 @@ func New(data storage.Data) func(http.ResponseWriter, *http.Request) {
 				w.Write([]byte(shortURL))
 			}
 		}
+	}
+}
+
+type Input struct {
+	URL string `json:"url"`
+}
+
+type Output struct {
+	Result string `json:"result"`
+}
+
+func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		id := utils.GenerateID()
+		shortURL := fmt.Sprintf("%s/%s", host, id)
+
+		input := Input{}
+		err = json.Unmarshal([]byte(body), &input)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		output, err := json.Marshal(Output{
+			Result: shortURL,
+		})
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		data.Add(input.URL, id)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(output))
 	}
 }
