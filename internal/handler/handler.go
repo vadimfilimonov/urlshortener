@@ -121,3 +121,35 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 		w.Write([]byte(output))
 	}
 }
+
+func NewUserUrls(data storage.Data) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userIDCookie, ErrNoCookie := r.Cookie("userID")
+
+		if ErrNoCookie != nil {
+			userIDCookie = &http.Cookie{
+				Name:  "userID",
+				Value: utils.GenerateID(),
+			}
+		}
+
+		http.SetCookie(w, userIDCookie)
+
+		items, err := data.GetItemsOfUser(userIDCookie.Value)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if len(items) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		response, err := json.Marshal(items)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(response)
+	}
+}

@@ -10,8 +10,8 @@ import (
 
 type item struct {
 	userID      string
-	shortenURL  string
-	originalURL string
+	ShortenURL  string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 type Data struct {
@@ -39,7 +39,7 @@ func (d Data) Get(shortenURL string) (string, error) {
 			return "", errors.New("incorrect shortenURL")
 		}
 
-		return item.originalURL, nil
+		return item.OriginalURL, nil
 	}
 
 	data, err := os.ReadFile(d.filename)
@@ -53,8 +53,8 @@ func (d Data) Get(shortenURL string) (string, error) {
 
 	for _, row := range rows {
 		if strings.Contains(row, shortenURL) {
-			urls := strings.Split(row, " ")
-			originalURL = urls[1]
+			columns := strings.Split(row, " ")
+			originalURL = columns[1]
 			break
 		}
 	}
@@ -66,14 +66,50 @@ func (d Data) Get(shortenURL string) (string, error) {
 	return originalURL, nil
 }
 
+func (d Data) GetItemsOfUser(userID string) ([]item, error) {
+	items := make([]item, 0)
+
+	if d.filename == "" {
+		for _, item := range d.items {
+			if item.userID == userID {
+				items = append(items, item)
+			}
+		}
+
+		return items, nil
+	}
+
+	data, err := os.ReadFile(d.filename)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows := strings.Split(string(data), "\n")
+
+	for _, row := range rows {
+		if strings.Contains(row, userID) {
+			columns := strings.Split(row, " ")
+			item := item{
+				userID:      columns[2],
+				ShortenURL:  columns[0],
+				OriginalURL: columns[1],
+			}
+			items = append(items, item)
+		}
+	}
+
+	return items, nil
+}
+
 func (d Data) Add(originalURL, shortenURL, userID string) bool {
 	shouldSaveURLsToMemory := d.filename == ""
 
 	if shouldSaveURLsToMemory {
 		d.items[shortenURL] = item{
 			userID:      userID,
-			shortenURL:  shortenURL,
-			originalURL: originalURL,
+			ShortenURL:  shortenURL,
+			OriginalURL: originalURL,
 		}
 		return true
 	}
