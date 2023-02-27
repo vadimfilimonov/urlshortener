@@ -27,15 +27,15 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 		switch r.Method {
 		case http.MethodGet:
 			{
-				shortURL := chi.URLParam(r, "shortURL")
+				shortenURL := chi.URLParam(r, "shortenURL")
 
-				isURLEmpty := shortURL == ""
+				isURLEmpty := shortenURL == ""
 
 				if isURLEmpty {
-					http.Error(w, "shortURL param is missed", http.StatusBadRequest)
+					http.Error(w, "shortenURL param is missed", http.StatusBadRequest)
 					return
 				}
-				originalURL, err := data.Get(shortURL)
+				originalURL, err := data.Get(shortenURL)
 
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
@@ -56,12 +56,12 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 				}
 
 				path := utils.GenerateID()
-				shortURL := fmt.Sprintf("%s/%s", host, path)
+				shortenURL := fmt.Sprintf("%s/%s", host, path)
 
 				data.Add(string(body), path, userIDCookie.Value)
 
 				w.WriteHeader(http.StatusCreated)
-				w.Write([]byte(shortURL))
+				w.Write([]byte(shortenURL))
 			}
 		}
 	}
@@ -96,7 +96,7 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 		}
 
 		path := utils.GenerateID()
-		shortURL := fmt.Sprintf("%s/%s", host, path)
+		shortenURL := fmt.Sprintf("%s/%s", host, path)
 
 		input := Input{}
 		err = json.Unmarshal([]byte(body), &input)
@@ -107,7 +107,7 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 		}
 
 		output, err := json.Marshal(Output{
-			Result: shortURL,
+			Result: shortenURL,
 		})
 
 		if err != nil {

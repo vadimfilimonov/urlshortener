@@ -26,7 +26,7 @@ func TestNew(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:       "Short url generated",
+			name:       "Shorten url generated",
 			request:    Host,
 			body:       "https://filimonovvadim.t.me",
 			method:     http.MethodPost,
@@ -73,7 +73,7 @@ func TestNewShorten(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:       "Short url generated",
+			name:       "Shorten url generated",
 			body:       "{\"url\":\"https://filimonovvadim.t.me\"}",
 			statusCode: http.StatusCreated,
 		},

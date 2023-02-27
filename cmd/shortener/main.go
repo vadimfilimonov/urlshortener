@@ -23,7 +23,7 @@ func main() {
 	r.Use(middleware.Compress(5))
 	data := storage.New(config.FileStoragePath)
 
-	r.Get("/{shortURL}", handler.New(data, config.BaseURL))
+	r.Get("/{shortenURL}", handler.New(data, config.BaseURL))
 	r.Post("/", handler.New(data, config.BaseURL))
 	r.Post("/api/shorten", handler.NewShorten(data, config.BaseURL))
 	err := http.ListenAndServe(config.ServerAddress, r)
