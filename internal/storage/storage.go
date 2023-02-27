@@ -8,9 +8,15 @@ import (
 	"strings"
 )
 
+type item struct {
+	cookie      string
+	shortenURL  string
+	originalURL string
+}
+
 type Data struct {
 	filename string
-	URLs     map[string]string
+	items    map[string]item
 }
 
 func New(filename string) Data {
@@ -21,19 +27,19 @@ func New(filename string) Data {
 
 	return Data{
 		filename: filename,
-		URLs:     map[string]string{},
+		items:    map[string]item{},
 	}
 }
 
 func (d Data) Get(shortenURL string) (string, error) {
 	if d.filename == "" {
-		originalURL, ok := d.URLs[shortenURL]
+		item, ok := d.items[shortenURL]
 
 		if !ok {
 			return "", errors.New("incorrect shortenURL")
 		}
 
-		return originalURL, nil
+		return item.originalURL, nil
 	}
 
 	data, err := os.ReadFile(d.filename)
@@ -64,7 +70,10 @@ func (d Data) Add(originalURL, shortenURL string) bool {
 	shouldSaveURLsToMemory := d.filename == ""
 
 	if shouldSaveURLsToMemory {
-		d.URLs[shortenURL] = originalURL
+		d.items[shortenURL] = item{
+			shortenURL:  shortenURL,
+			originalURL: originalURL,
+		}
 		return true
 	}
 
