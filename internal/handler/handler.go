@@ -122,7 +122,12 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 	}
 }
 
-func NewUserUrls(data storage.Data) func(http.ResponseWriter, *http.Request) {
+type URLData = struct {
+	ShortenURL  string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
+
+func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDCookie, ErrNoCookie := r.Cookie("userID")
 
@@ -144,8 +149,14 @@ func NewUserUrls(data storage.Data) func(http.ResponseWriter, *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-
-		response, err := json.Marshal(items)
+		normalizedItems := make([]URLData, len(items))
+		for index, item := range items {
+			normalizedItems[index] = URLData{
+				ShortenURL:  fmt.Sprintf("%s/%s", host, item.ShortenURL),
+				OriginalURL: item.OriginalURL,
+			}
+		}
+		response, err := json.Marshal(normalizedItems)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
