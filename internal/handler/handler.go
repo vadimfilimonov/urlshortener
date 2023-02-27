@@ -150,6 +150,7 @@ func NewUserUrls(data storage.Data) func(http.ResponseWriter, *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		w.Header().Add("Content-Type", "application/json")
 		w.Write(response)
 	}
 }
