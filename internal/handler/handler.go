@@ -13,6 +13,17 @@ import (
 
 func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		userIDCookie, ErrNoCookie := r.Cookie("userID")
+
+		if ErrNoCookie != nil {
+			userIDCookie = &http.Cookie{
+				Name:  "userID",
+				Value: utils.GenerateID(),
+			}
+		}
+
+		http.SetCookie(w, userIDCookie)
+
 		switch r.Method {
 		case http.MethodGet:
 			{
@@ -44,10 +55,10 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 					return
 				}
 
-				id := utils.GenerateID()
-				shortURL := fmt.Sprintf("%s/%s", host, id)
+				path := utils.GenerateID()
+				shortURL := fmt.Sprintf("%s/%s", host, path)
 
-				data.Add(string(body), id)
+				data.Add(string(body), path, userIDCookie.Value)
 
 				w.WriteHeader(http.StatusCreated)
 				w.Write([]byte(shortURL))
@@ -66,6 +77,17 @@ type Output struct {
 
 func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		userIDCookie, ErrNoCookie := r.Cookie("userID")
+
+		if ErrNoCookie != nil {
+			userIDCookie = &http.Cookie{
+				Name:  "userID",
+				Value: utils.GenerateID(),
+			}
+		}
+
+		http.SetCookie(w, userIDCookie)
+
 		body, err := io.ReadAll(r.Body)
 
 		if err != nil {
@@ -73,8 +95,8 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		id := utils.GenerateID()
-		shortURL := fmt.Sprintf("%s/%s", host, id)
+		path := utils.GenerateID()
+		shortURL := fmt.Sprintf("%s/%s", host, path)
 
 		input := Input{}
 		err = json.Unmarshal([]byte(body), &input)
@@ -93,7 +115,7 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		data.Add(input.URL, id)
+		data.Add(input.URL, path, userIDCookie.Value)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(output))

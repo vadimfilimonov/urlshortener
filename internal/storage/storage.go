@@ -9,7 +9,7 @@ import (
 )
 
 type item struct {
-	cookie      string
+	userID      string
 	shortenURL  string
 	originalURL string
 }
@@ -66,11 +66,12 @@ func (d Data) Get(shortenURL string) (string, error) {
 	return originalURL, nil
 }
 
-func (d Data) Add(originalURL, shortenURL string) bool {
+func (d Data) Add(originalURL, shortenURL, userID string) bool {
 	shouldSaveURLsToMemory := d.filename == ""
 
 	if shouldSaveURLsToMemory {
 		d.items[shortenURL] = item{
+			userID:      userID,
 			shortenURL:  shortenURL,
 			originalURL: originalURL,
 		}
@@ -82,7 +83,7 @@ func (d Data) Add(originalURL, shortenURL string) bool {
 		return false
 	}
 	writer := bufio.NewWriter(file)
-	data := fmt.Sprintf("%s %s\n", shortenURL, originalURL)
+	data := fmt.Sprintf("%s %s %s\n", shortenURL, originalURL, userID)
 	_, err = writer.Write([]byte(data))
 
 	if err != nil {
