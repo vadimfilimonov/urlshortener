@@ -173,13 +173,12 @@ func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http
 
 func NewPing(DBPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(DBPath)
 		if DBPath == "" {
 			http.Error(w, "empty path to database", http.StatusInternalServerError)
 			return
 		}
 
-		db, err := sql.Open("pgx", "db.db")
+		db, err := sql.Open("pgx", DBPath)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
