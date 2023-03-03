@@ -13,7 +13,7 @@ import (
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 	"github.com/go-chi/chi/v5"
-	_ "github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
