@@ -27,6 +27,7 @@ func main() {
 	r.Post("/", handler.New(data, config.BaseURL))
 	r.Post("/api/shorten", handler.NewShorten(data, config.BaseURL))
 	r.Get("/api/user/urls", handler.NewUserUrls(data, config.BaseURL))
+	r.Get("/ping", handler.NewPing(config.DatabaseDNS))
 	err := http.ListenAndServe(config.ServerAddress, r)
 
 	if err != nil {

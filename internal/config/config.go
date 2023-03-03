@@ -11,6 +11,7 @@ type Config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS"`
 	BaseURL         string `env:"BASE_URL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	DatabaseDNS     string `env:"DATABASE_DSN"`
 }
 
 func New() Config {
@@ -27,6 +28,7 @@ func (c *Config) Parse() {
 	serverAddress := flag.String("a", "localhost:8080", "адрес запуска HTTP-сервера")
 	BaseURL := flag.String("b", "http://localhost:8080", "базовый адрес результирующего сокращённого URL")
 	FileStoragePath := flag.String("f", "", "путь до файла с сокращёнными URL")
+	DatabaseDNS := flag.String("d", "", "адрес подключения к БД")
 	flag.Parse()
 
 	if c.ServerAddress == "" {
@@ -39,5 +41,9 @@ func (c *Config) Parse() {
 
 	if c.FileStoragePath == "" {
 		c.FileStoragePath = *FileStoragePath
+	}
+
+	if c.DatabaseDNS == "" {
+		c.DatabaseDNS = *DatabaseDNS
 	}
 }

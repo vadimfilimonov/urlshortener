@@ -165,3 +165,9 @@ func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http
 		w.Write(response)
 	}
 }
+
+func NewPing(DBPath string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "cannot connect to database", http.StatusInternalServerError)
+	}
+}
