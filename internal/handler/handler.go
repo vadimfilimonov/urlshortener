@@ -185,7 +185,7 @@ func NewPing(DBPath string) func(http.ResponseWriter, *http.Request) {
 		}
 		defer db.Close()
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+		ctx, cancel := context.WithTimeout(r.Context(), time.Second*1)
 		defer cancel()
 		err = db.PingContext(ctx)
 		if err != nil {
