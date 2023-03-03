@@ -1,14 +1,19 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
+	"database/sql"
 
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v5"
 )
 
 func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
@@ -168,6 +173,26 @@ func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http
 
 func NewPing(DBPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "cannot connect to database", http.StatusInternalServerError)
+		fmt.Println(DBPath)
+		if DBPath == "" {
+			http.Error(w, "empty path to database", http.StatusInternalServerError)
+			return
+		}
+
+		db, err := sql.Open("pgx", "db.db")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+		defer cancel()
+		err = db.PingContext(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
