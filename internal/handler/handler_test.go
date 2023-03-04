@@ -52,7 +52,7 @@ func TestNew(t *testing.T) {
 			body := strings.NewReader(tt.body)
 			request := httptest.NewRequest(tt.method, tt.request, body)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(New(storage.New(""), tt.request))
+			h := http.HandlerFunc(New(storage.NewMemory(), tt.request))
 			h.ServeHTTP(w, request)
 
 			result := w.Result()
@@ -89,7 +89,7 @@ func TestNewShorten(t *testing.T) {
 			body := strings.NewReader(tt.body)
 			request := httptest.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/shorten", Host), body)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(NewShorten(storage.New(""), Host))
+			h := http.HandlerFunc(NewShorten(storage.NewMemory(), Host))
 			h.ServeHTTP(w, request)
 
 			result := w.Result()

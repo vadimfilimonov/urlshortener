@@ -21,7 +21,12 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(decompressMiddleware)
 	r.Use(middleware.Compress(5))
-	data := storage.New(config.FileStoragePath)
+	var data storage.Data
+	if config.FileStoragePath != "" {
+		data = storage.NewFile(config.FileStoragePath)
+	} else {
+		data = storage.NewMemory()
+	}
 
 	r.Get("/{shortenURL}", handler.New(data, config.BaseURL))
 	r.Post("/", handler.New(data, config.BaseURL))
