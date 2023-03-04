@@ -127,6 +127,13 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 	}
 }
 
+func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+	}
+}
+
 type URLData = struct {
 	ShortenURL  string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
