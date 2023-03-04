@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -22,9 +23,12 @@ func main() {
 	r.Use(decompressMiddleware)
 	r.Use(middleware.Compress(5))
 	var data storage.Data
-	if config.FileStoragePath != "" {
+	switch {
+	case config.DatabaseDNS != "":
+		data = storage.NewDB(config.DatabaseDNS)
+	case config.FileStoragePath != "":
 		data = storage.NewFile(config.FileStoragePath)
-	} else {
+	default:
 		data = storage.NewMemory()
 	}
 
@@ -36,7 +40,7 @@ func main() {
 	err := http.ListenAndServe(config.ServerAddress, r)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 

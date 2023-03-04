@@ -2,7 +2,7 @@ package storage
 
 type Data interface {
 	Get(shortenURL string) (string, error)
-	GetItemsOfUser(userId string) ([]item, error)
+	GetItemsOfUser(userID string) ([]item, error)
 	Add(originalURL, shortenURL, userID string) bool
 }
 
