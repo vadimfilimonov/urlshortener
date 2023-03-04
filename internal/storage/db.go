@@ -109,6 +109,11 @@ func (data dataDB) GetItemsOfUser(userID string) ([]item, error) {
 		items = append(items, item)
 	}
 
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	db.Close()
 	return items, nil
 }
