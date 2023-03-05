@@ -82,9 +82,6 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		path := utils.GenerateID()
-		shortenURL := fmt.Sprintf("%s/%s", host, path)
-
 		input := ShortenInput{}
 		err = json.Unmarshal([]byte(body), &input)
 
@@ -92,6 +89,9 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		path := utils.GenerateID()
+		shortenURL := fmt.Sprintf("%s/%s", host, path)
 
 		output, err := json.Marshal(ShortenOutput{
 			Result: shortenURL,
@@ -121,10 +121,47 @@ type ShortenBatchOutputItem struct {
 
 func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		manageUserIDCookie(w, r)
+		userIDCookieValue := manageUserIDCookie(w, r)
+
+		body, err := io.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		input := make([]ShortenBatchInputItem, 0)
+		err = json.Unmarshal([]byte(body), &input)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		outputList := make([]ShortenBatchOutputItem, len(input))
+
+		for i, item := range input {
+			path := utils.GenerateID()
+			shortenURL := fmt.Sprintf("%s/%s", host, path)
+
+			outputList[i] = ShortenBatchOutputItem{
+				CorrelationId: item.CorrelationId,
+				ShortURL:      shortenURL,
+			}
+
+			data.Add(item.OriginalURL, path, userIDCookieValue)
+		}
+
+		output, err := json.Marshal(outputList)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(output))
 	}
 }
 
