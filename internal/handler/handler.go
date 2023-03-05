@@ -18,16 +18,7 @@ import (
 
 func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userIDCookie, ErrNoCookie := r.Cookie("userID")
-
-		if ErrNoCookie != nil {
-			userIDCookie = &http.Cookie{
-				Name:  "userID",
-				Value: utils.GenerateID(),
-			}
-		}
-
-		http.SetCookie(w, userIDCookie)
+		userIDCookieValue := manageUserIDCookie(w, r)
 
 		switch r.Method {
 		case http.MethodGet:
@@ -63,7 +54,7 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 				path := utils.GenerateID()
 				shortenURL := fmt.Sprintf("%s/%s", host, path)
 
-				data.Add(string(body), path, userIDCookie.Value)
+				data.Add(string(body), path, userIDCookieValue)
 
 				w.WriteHeader(http.StatusCreated)
 				w.Write([]byte(shortenURL))
@@ -82,16 +73,7 @@ type ShortenOutput struct {
 
 func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userIDCookie, ErrNoCookie := r.Cookie("userID")
-
-		if ErrNoCookie != nil {
-			userIDCookie = &http.Cookie{
-				Name:  "userID",
-				Value: utils.GenerateID(),
-			}
-		}
-
-		http.SetCookie(w, userIDCookie)
+		userIDCookieValue := manageUserIDCookie(w, r)
 
 		body, err := io.ReadAll(r.Body)
 
@@ -120,7 +102,7 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		data.Add(input.URL, path, userIDCookie.Value)
+		data.Add(input.URL, path, userIDCookieValue)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(output))
@@ -139,6 +121,8 @@ type ShortenBatchOutputItem struct {
 
 func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		manageUserIDCookie(w, r)
+
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 	}
@@ -151,18 +135,9 @@ type URLData = struct {
 
 func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userIDCookie, ErrNoCookie := r.Cookie("userID")
+		userIDCookieValue := manageUserIDCookie(w, r)
 
-		if ErrNoCookie != nil {
-			userIDCookie = &http.Cookie{
-				Name:  "userID",
-				Value: utils.GenerateID(),
-			}
-		}
-
-		http.SetCookie(w, userIDCookie)
-
-		items, err := data.GetItemsOfUser(userIDCookie.Value)
+		items, err := data.GetItemsOfUser(userIDCookieValue)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -190,6 +165,8 @@ func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http
 
 func NewPing(DBPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		manageUserIDCookie(w, r)
+
 		if DBPath == "" {
 			http.Error(w, "empty path to database", http.StatusInternalServerError)
 			return
@@ -211,4 +188,19 @@ func NewPing(DBPath string) func(http.ResponseWriter, *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func manageUserIDCookie(w http.ResponseWriter, r *http.Request) string {
+	userIDCookie, ErrNoCookie := r.Cookie("userID")
+
+	if ErrNoCookie != nil {
+		userIDCookie = &http.Cookie{
+			Name:  "userID",
+			Value: utils.GenerateID(),
+		}
+	}
+
+	http.SetCookie(w, userIDCookie)
+
+	return userIDCookie.Value
 }
