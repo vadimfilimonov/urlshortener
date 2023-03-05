@@ -127,7 +127,9 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) bool {
 		return false
 	}
 
-	_, err = db.Exec("INSERT INTO urls(user_id, shorten_url, original_url) VALUES($1,$2,$3)", userID, shortenURL, originalURL)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err = db.ExecContext(ctx, "INSERT INTO urls(user_id, shorten_url, original_url) VALUES($1,$2,$3)", userID, shortenURL, originalURL)
 
 	if err != nil {
 		db.Close()
