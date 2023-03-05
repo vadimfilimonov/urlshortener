@@ -56,7 +56,6 @@ func (data dataDB) Get(shortenURL string) (string, error) {
 
 	if err != nil {
 		db.Close()
-		log.Println(err)
 		return "", err
 	}
 
@@ -68,7 +67,6 @@ func (data dataDB) Get(shortenURL string) (string, error) {
 
 	if err != nil {
 		db.Close()
-		log.Println(err)
 		return "", err
 	}
 
@@ -123,7 +121,6 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) bool {
 
 	if err != nil {
 		db.Close()
-		log.Println(err)
 		return false
 	}
 
@@ -133,11 +130,9 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) bool {
 
 	if err != nil {
 		db.Close()
-		log.Println(err)
 		return false
 	}
 
 	db.Close()
-
 	return true
 }

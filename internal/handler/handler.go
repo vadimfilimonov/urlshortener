@@ -25,9 +25,7 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 			{
 				shortenURL := chi.URLParam(r, "shortenURL")
 
-				isURLEmpty := shortenURL == ""
-
-				if isURLEmpty {
+				if len(shortenURL) == 0 {
 					http.Error(w, "shortenURL param is missed", http.StatusBadRequest)
 					return
 				}
@@ -144,12 +142,18 @@ func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *
 			path := utils.GenerateID()
 			shortenURL := fmt.Sprintf("%s/%s", host, path)
 
+			// TODO: вместо ок вернуть ошибку
+			ok := data.Add(item.OriginalURL, path, userIDCookieValue)
+
+			if !ok {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
 			outputList[i] = ShortenBatchOutputItem{
 				CorrelationID: item.CorrelationID,
 				ShortURL:      shortenURL,
 			}
-
-			data.Add(item.OriginalURL, path, userIDCookieValue)
 		}
 
 		output, err := json.Marshal(outputList)
