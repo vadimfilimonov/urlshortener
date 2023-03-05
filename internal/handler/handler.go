@@ -110,12 +110,12 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 }
 
 type ShortenBatchInputItem struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 
 type ShortenBatchOutputItem struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
 }
 
@@ -145,7 +145,7 @@ func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *
 			shortenURL := fmt.Sprintf("%s/%s", host, path)
 
 			outputList[i] = ShortenBatchOutputItem{
-				CorrelationId: item.CorrelationId,
+				CorrelationID: item.CorrelationID,
 				ShortURL:      shortenURL,
 			}
 
