@@ -151,8 +151,6 @@ func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *
 
 			data.Add(item.OriginalURL, path, userIDCookieValue)
 		}
-		// TODO: delete crutch
-		time.Sleep(3 * time.Second)
 
 		output, err := json.Marshal(outputList)
 
