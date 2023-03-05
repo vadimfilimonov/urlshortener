@@ -72,11 +72,11 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 	}
 }
 
-type Input struct {
+type ShortenInput struct {
 	URL string `json:"url"`
 }
 
-type Output struct {
+type ShortenOutput struct {
 	Result string `json:"result"`
 }
 
@@ -103,7 +103,7 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 		path := utils.GenerateID()
 		shortenURL := fmt.Sprintf("%s/%s", host, path)
 
-		input := Input{}
+		input := ShortenInput{}
 		err = json.Unmarshal([]byte(body), &input)
 
 		if err != nil {
@@ -111,7 +111,7 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		output, err := json.Marshal(Output{
+		output, err := json.Marshal(ShortenOutput{
 			Result: shortenURL,
 		})
 
@@ -125,6 +125,16 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(output))
 	}
+}
+
+type ShortenBatchInputItem struct {
+	CorrelationId string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type ShortenBatchOutputItem struct {
+	CorrelationId string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
 }
 
 func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
