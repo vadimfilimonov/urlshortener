@@ -116,12 +116,12 @@ func (data dataDB) GetItemsOfUser(userID string) ([]item, error) {
 	return items, nil
 }
 
-func (data dataDB) Add(originalURL, shortenURL, userID string) bool {
+func (data dataDB) Add(originalURL, shortenURL, userID string) error {
 	db, err := sql.Open("postgres", data.databaseDNS)
 
 	if err != nil {
 		db.Close()
-		return false
+		return err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -130,9 +130,9 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) bool {
 
 	if err != nil {
 		db.Close()
-		return false
+		return err
 	}
 
 	db.Close()
-	return true
+	return nil
 }

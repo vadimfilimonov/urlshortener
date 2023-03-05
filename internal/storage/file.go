@@ -70,21 +70,25 @@ func (d dataFile) GetItemsOfUser(userID string) ([]item, error) {
 	return items, nil
 }
 
-func (d dataFile) Add(originalURL, shortenURL, userID string) bool {
+func (d dataFile) Add(originalURL, shortenURL, userID string) error {
 	file, err := os.OpenFile(d.filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
-		return false
+		return err
 	}
 	writer := bufio.NewWriter(file)
 	data := fmt.Sprintf("%s %s %s\n", shortenURL, originalURL, userID)
 	_, err = writer.Write([]byte(data))
 
 	if err != nil {
-		return false
+		return err
 	}
 
 	err = writer.Flush()
 	file.Close()
 
-	return err == nil
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

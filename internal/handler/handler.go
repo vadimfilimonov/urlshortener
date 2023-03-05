@@ -142,10 +142,9 @@ func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *
 			path := utils.GenerateID()
 			shortenURL := fmt.Sprintf("%s/%s", host, path)
 
-			// TODO: вместо ок вернуть ошибку
-			ok := data.Add(item.OriginalURL, path, userIDCookieValue)
+			err := data.Add(item.OriginalURL, path, userIDCookieValue)
 
-			if !ok {
+			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}

@@ -3,7 +3,7 @@ package storage
 type Data interface {
 	Get(shortenURL string) (string, error)
 	GetItemsOfUser(userID string) ([]item, error)
-	Add(originalURL, shortenURL, userID string) bool
+	Add(originalURL, shortenURL, userID string) error
 }
 
 type item struct {

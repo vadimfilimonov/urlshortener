@@ -32,11 +32,11 @@ func (items memoryItems) GetItemsOfUser(userID string) ([]item, error) {
 	return userItems, nil
 }
 
-func (items memoryItems) Add(originalURL, shortenURL, userID string) bool {
+func (items memoryItems) Add(originalURL, shortenURL, userID string) error {
 	items[shortenURL] = item{
 		userID:      userID,
 		ShortenURL:  shortenURL,
 		OriginalURL: originalURL,
 	}
-	return true
+	return nil
 }
