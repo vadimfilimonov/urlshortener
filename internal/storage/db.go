@@ -124,9 +124,22 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) error {
 		return err
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err = db.ExecContext(ctx, "INSERT INTO urls(user_id, shorten_url, original_url) VALUES($1,$2,$3)", userID, shortenURL, originalURL)
+
+	stmt, err := tx.PrepareContext(ctx, "INSERT INTO urls(user_id, shorten_url, original_url) VALUES($1,$2,$3)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, userID, shortenURL, originalURL)
 
 	if err != nil {
 		db.Close()
@@ -134,5 +147,5 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) error {
 	}
 
 	db.Close()
-	return nil
+	return tx.Commit()
 }
