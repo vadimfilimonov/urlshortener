@@ -145,7 +145,7 @@ func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *
 			err := data.Add(item.OriginalURL, path, userIDCookieValue)
 
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusNotImplemented)
 				return
 			}
 
@@ -158,7 +158,7 @@ func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *
 		output, err := json.Marshal(outputList)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadGateway)
 			return
 		}
 
