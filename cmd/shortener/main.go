@@ -25,6 +25,10 @@ func main() {
 	var data storage.Data
 	switch {
 	case config.DatabaseDNS != "":
+		err := storage.RunMigrations(config.DatabaseDNS)
+		if err != nil {
+			log.Fatalln(err)
+		}
 		data = storage.NewDB(config.DatabaseDNS)
 	case config.FileStoragePath != "":
 		data = storage.NewFile(config.FileStoragePath)

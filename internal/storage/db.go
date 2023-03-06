@@ -45,12 +45,6 @@ func RunMigrations(databaseDNS string) error {
 }
 
 func NewDB(databaseDNS string) dataDB {
-	err := RunMigrations(databaseDNS)
-
-	if err != nil {
-		log.Fatalln(err)
-	}
-
 	return dataDB{databaseDNS: databaseDNS}
 }
 
