@@ -15,19 +15,19 @@ type dataDB struct {
 	databaseDNS string
 }
 
-func runMigrations(databaseDNS string) {
+func RunMigrations(databaseDNS string) error {
 	db, err := sql.Open("postgres", databaseDNS)
 
 	if err != nil {
 		db.Close()
-		log.Fatal("unable to open db")
+		return err
 	}
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 
 	if err != nil {
 		db.Close()
-		log.Fatalf("unable to init db driver %v", err)
+		return err
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
@@ -35,18 +35,21 @@ func runMigrations(databaseDNS string) {
 		"postgres",
 		driver,
 	)
-
 	if err != nil {
 		db.Close()
-		log.Fatalf("unable to init db migrator %v", err)
+		return err
 	}
 
 	m.Up()
-	db.Close()
+	return db.Close()
 }
 
 func NewDB(databaseDNS string) dataDB {
-	runMigrations(databaseDNS)
+	err := RunMigrations(databaseDNS)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	return dataDB{databaseDNS: databaseDNS}
 }
