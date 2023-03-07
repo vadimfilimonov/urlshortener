@@ -51,22 +51,20 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 					return
 				}
 
-				path := utils.GenerateID()
-				shortenURL := fmt.Sprintf("%s/%s", host, path)
-
-				err = data.Add(string(body), path, userIDCookieValue)
-
-				if errors.Is(err, constants.ErrURLAlreadyExists) {
-					http.Error(w, err.Error(), http.StatusConflict)
-					return
-				}
+				shortenURLPath, errDataAdd := data.Add(string(body), userIDCookieValue)
+				shortenURL := fmt.Sprintf("%s/%s", host, shortenURLPath)
 
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
-				w.WriteHeader(http.StatusCreated)
+				if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
+					w.WriteHeader(http.StatusConflict)
+				} else {
+					w.WriteHeader(http.StatusCreated)
+				}
+
 				w.Write([]byte(shortenURL))
 			}
 		}
@@ -100,8 +98,8 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		path := utils.GenerateID()
-		shortenURL := fmt.Sprintf("%s/%s", host, path)
+		shortenURLPath, errDataAdd := data.Add(input.URL, userIDCookieValue)
+		shortenURL := fmt.Sprintf("%s/%s", host, shortenURLPath)
 
 		output, err := json.Marshal(ShortenOutput{
 			Result: shortenURL,
@@ -112,15 +110,13 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		err = data.Add(input.URL, path, userIDCookieValue)
-
-		if errors.Is(err, constants.ErrURLAlreadyExists) {
-			http.Error(w, err.Error(), http.StatusConflict)
-			return
+		if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
+			w.WriteHeader(http.StatusConflict)
+		} else {
+			w.WriteHeader(http.StatusCreated)
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(output))
 	}
 }
@@ -157,10 +153,8 @@ func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *
 		outputList := make([]ShortenBatchOutputItem, len(input))
 
 		for i, item := range input {
-			path := utils.GenerateID()
-			shortenURL := fmt.Sprintf("%s/%s", host, path)
-
-			err := data.Add(item.OriginalURL, path, userIDCookieValue)
+			shortenURLPath, err := data.Add(item.OriginalURL, userIDCookieValue)
+			shortenURL := fmt.Sprintf("%s/%s", host, shortenURLPath)
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

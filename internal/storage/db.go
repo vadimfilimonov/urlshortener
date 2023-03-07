@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/VadimFilimonov/urlshortener/internal/constants"
+	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -114,17 +115,17 @@ func (data dataDB) GetItemsOfUser(userID string) ([]item, error) {
 	return items, nil
 }
 
-func (data dataDB) Add(originalURL, shortenURL, userID string) error {
+func (data dataDB) Add(originalURL, userID string) (string, error) {
 	db, err := sql.Open("postgres", data.databaseDNS)
 
 	if err != nil {
 		db.Close()
-		return err
+		return "", err
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer tx.Rollback()
 
@@ -133,28 +134,42 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) error {
 
 	stmt, err := tx.PrepareContext(ctx, "INSERT INTO urls(user_id, shorten_url, original_url) VALUES($1,$2,$3) ON CONFLICT (original_url) DO NOTHING")
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer stmt.Close()
 
-	sqlResult, err := stmt.ExecContext(ctx, userID, shortenURL, originalURL)
+	shortenURLPath := utils.GenerateID()
+
+	sqlResult, err := stmt.ExecContext(ctx, userID, shortenURLPath, originalURL)
 	if err != nil {
 		db.Close()
-		return err
+		return "", err
 	}
 
 	rowsAffected, err := sqlResult.RowsAffected()
 	if err != nil {
 		db.Close()
-		return err
+		return "", err
+	}
+
+	err = tx.Commit()
+
+	if err != nil {
+		return "", err
 	}
 
 	hasURLBeenAdded := rowsAffected != 0
 	if !hasURLBeenAdded {
-		db.Close()
-		return constants.ErrURLAlreadyExists
+		err = db.QueryRowContext(ctx, "SELECT shorten_url FROM urls WHERE original_url = $1 LIMIT 1", originalURL).Scan(&shortenURLPath)
+
+		if err != nil {
+			db.Close()
+			return "", err
+		}
+
+		return shortenURLPath, constants.ErrURLAlreadyExists
 	}
 
 	db.Close()
-	return tx.Commit()
+	return shortenURLPath, nil
 }

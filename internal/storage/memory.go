@@ -2,6 +2,8 @@ package storage
 
 import (
 	"errors"
+
+	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 )
 
 type memoryItems map[string]item
@@ -32,11 +34,14 @@ func (items memoryItems) GetItemsOfUser(userID string) ([]item, error) {
 	return userItems, nil
 }
 
-func (items memoryItems) Add(originalURL, shortenURL, userID string) error {
-	items[shortenURL] = item{
+func (items memoryItems) Add(originalURL, userID string) (string, error) {
+	shortenURLPath := utils.GenerateID()
+
+	items[shortenURLPath] = item{
 		userID:      userID,
-		ShortenURL:  shortenURL,
+		ShortenURL:  shortenURLPath,
 		OriginalURL: originalURL,
 	}
-	return nil
+
+	return shortenURLPath, nil
 }
