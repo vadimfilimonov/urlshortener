@@ -149,8 +149,8 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) error {
 		return err
 	}
 
-	hasUrlBeenAdded := rowsAffected != 0
-	if !hasUrlBeenAdded {
+	hasURLBeenAdded := rowsAffected != 0
+	if !hasURLBeenAdded {
 		db.Close()
 		return constants.ErrURLAlreadyExists
 	}
