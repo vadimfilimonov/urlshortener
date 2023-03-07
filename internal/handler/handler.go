@@ -54,17 +54,14 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 				shortenURLPath, errDataAdd := data.Add(string(body), userIDCookieValue)
 				shortenURL := fmt.Sprintf("%s/%s", host, shortenURLPath)
 
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+				if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
+					w.WriteHeader(http.StatusConflict)
+				} else if errDataAdd != nil {
+					http.Error(w, errDataAdd.Error(), http.StatusInternalServerError)
 					return
 				}
 
-				if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
-					w.WriteHeader(http.StatusConflict)
-				} else {
-					w.WriteHeader(http.StatusCreated)
-				}
-
+				w.WriteHeader(http.StatusCreated)
 				w.Write([]byte(shortenURL))
 			}
 		}
@@ -112,10 +109,12 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 
 		if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
 			w.WriteHeader(http.StatusConflict)
-		} else {
-			w.WriteHeader(http.StatusCreated)
+		} else if errDataAdd != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
+		w.WriteHeader(http.StatusCreated)
 		w.Header().Add("Content-Type", "application/json")
 		w.Write([]byte(output))
 	}
