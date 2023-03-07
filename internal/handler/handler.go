@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"database/sql"
 
+	"github.com/VadimFilimonov/urlshortener/internal/constants"
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 	"github.com/go-chi/chi/v5"
@@ -52,7 +54,17 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 				path := utils.GenerateID()
 				shortenURL := fmt.Sprintf("%s/%s", host, path)
 
-				data.Add(string(body), path, userIDCookieValue)
+				err = data.Add(string(body), path, userIDCookieValue)
+
+				if errors.Is(err, constants.ErrURLAlreadyExists) {
+					http.Error(w, err.Error(), http.StatusConflict)
+					return
+				}
+
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 
 				w.WriteHeader(http.StatusCreated)
 				w.Write([]byte(shortenURL))
@@ -100,7 +112,13 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		data.Add(input.URL, path, userIDCookieValue)
+		err = data.Add(input.URL, path, userIDCookieValue)
+
+		if errors.Is(err, constants.ErrURLAlreadyExists) {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(output))

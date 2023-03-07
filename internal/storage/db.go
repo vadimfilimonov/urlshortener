@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/VadimFilimonov/urlshortener/internal/constants"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -130,17 +131,28 @@ func (data dataDB) Add(originalURL, shortenURL, userID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	stmt, err := tx.PrepareContext(ctx, "INSERT INTO urls(user_id, shorten_url, original_url) VALUES($1,$2,$3)")
+	stmt, err := tx.PrepareContext(ctx, "INSERT INTO urls(user_id, shorten_url, original_url) VALUES($1,$2,$3) ON CONFLICT (original_url) DO NOTHING")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, userID, shortenURL, originalURL)
-
+	sqlResult, err := stmt.ExecContext(ctx, userID, shortenURL, originalURL)
 	if err != nil {
 		db.Close()
 		return err
+	}
+
+	rowsAffected, err := sqlResult.RowsAffected()
+	if err != nil {
+		db.Close()
+		return err
+	}
+
+	hasUrlBeenAdded := rowsAffected != 0
+	if !hasUrlBeenAdded {
+		db.Close()
+		return constants.ErrURLAlreadyExists
 	}
 
 	db.Close()
