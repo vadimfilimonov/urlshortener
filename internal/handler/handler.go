@@ -56,6 +56,8 @@ func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request
 
 				if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
 					w.WriteHeader(http.StatusConflict)
+					w.Write([]byte(shortenURL))
+					return
 				} else if errDataAdd != nil {
 					http.Error(w, errDataAdd.Error(), http.StatusInternalServerError)
 					return
@@ -108,14 +110,17 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 		}
 
 		if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
+			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
+			w.Write([]byte(output))
+			return
 		} else if errDataAdd != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, errDataAdd.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
 		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(output))
 	}
 }
