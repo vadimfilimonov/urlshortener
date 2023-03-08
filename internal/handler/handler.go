@@ -50,15 +50,16 @@ func NewPost(data storage.Data, host string) func(http.ResponseWriter, *http.Req
 			return
 		}
 
-		shortenURLPath, errDataAdd := data.Add(string(body), userIDCookieValue)
+		shortenURLPath, err := data.Add(string(body), userIDCookieValue)
 		shortenURL := fmt.Sprintf("%s/%s", host, shortenURLPath)
 
-		if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
+		if errors.Is(err, constants.ErrURLAlreadyExists) {
 			w.WriteHeader(http.StatusConflict)
 			w.Write([]byte(shortenURL))
 			return
-		} else if errDataAdd != nil {
-			http.Error(w, errDataAdd.Error(), http.StatusInternalServerError)
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
