@@ -89,7 +89,7 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		input := ShortenInput{}
+		var input ShortenInput
 		err = json.Unmarshal([]byte(body), &input)
 
 		if err != nil {
@@ -140,6 +140,7 @@ func NewShortenBatch(data storage.Data, host string) func(http.ResponseWriter, *
 		userIDCookieValue := manageUserIDCookie(w, r)
 
 		body, err := io.ReadAll(r.Body)
+		defer r.Body.Close()
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -237,6 +238,7 @@ func NewPing(DBPath string) func(http.ResponseWriter, *http.Request) {
 
 		ctx, cancel := context.WithTimeout(r.Context(), time.Second*1)
 		defer cancel()
+		defer ctx.Done()
 		err = db.PingContext(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
