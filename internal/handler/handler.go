@@ -113,7 +113,8 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			w.WriteHeader(http.StatusConflict)
 			w.Write([]byte(responseJSON))
 			return
-		} else if errDataAdd != nil {
+		}
+		if errDataAdd != nil {
 			http.Error(w, errDataAdd.Error(), http.StatusInternalServerError)
 			return
 		}
