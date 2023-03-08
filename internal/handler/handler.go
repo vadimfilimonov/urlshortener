@@ -88,15 +88,15 @@ func NewShorten(data storage.Data, host string) func(http.ResponseWriter, *http.
 			return
 		}
 
-		var input ShortenInput
-		err = json.Unmarshal([]byte(body), &input)
+		var requestBody ShortenInput
+		err = json.Unmarshal([]byte(body), &requestBody)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		shortenURLPath, errDataAdd := data.Add(input.URL, userIDCookieValue)
+		shortenURLPath, errDataAdd := data.Add(requestBody.URL, userIDCookieValue)
 		shortenURL := fmt.Sprintf("%s/%s", host, shortenURLPath)
 
 		responseJSON, err := json.Marshal(ShortenOutput{
