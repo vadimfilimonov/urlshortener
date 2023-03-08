@@ -36,8 +36,8 @@ func main() {
 		data = storage.NewMemory()
 	}
 
-	r.Get("/{shortenURL}", handler.New(data, config.BaseURL))
-	r.Post("/", handler.New(data, config.BaseURL))
+	r.Get("/{shortenURL}", handler.NewGet(data, config.BaseURL))
+	r.Post("/", handler.NewPost(data, config.BaseURL))
 	r.Post("/api/shorten", handler.NewShorten(data, config.BaseURL))
 	r.Post("/api/shorten/batch", handler.NewShortenBatch(data, config.BaseURL))
 	r.Get("/api/user/urls", handler.NewUserUrls(data, config.BaseURL))

@@ -18,55 +18,52 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func New(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
+func NewGet(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		shortenURL := chi.URLParam(r, "shortenURL")
+
+		if len(shortenURL) == 0 {
+			http.Error(w, "shortenURL param is missed", http.StatusBadRequest)
+			return
+		}
+		originalURL, err := data.Get(shortenURL)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Location", originalURL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	}
+}
+
+func NewPost(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDCookieValue := manageUserIDCookie(w, r)
 
-		switch r.Method {
-		case http.MethodGet:
-			{
-				shortenURL := chi.URLParam(r, "shortenURL")
+		body, err := io.ReadAll(r.Body)
+		defer r.Body.Close()
 
-				if len(shortenURL) == 0 {
-					http.Error(w, "shortenURL param is missed", http.StatusBadRequest)
-					return
-				}
-				originalURL, err := data.Get(shortenURL)
-
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-
-				w.Header().Set("Location", originalURL)
-				w.WriteHeader(http.StatusTemporaryRedirect)
-			}
-		case http.MethodPost:
-			{
-				body, err := io.ReadAll(r.Body)
-				defer r.Body.Close()
-
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				shortenURLPath, errDataAdd := data.Add(string(body), userIDCookieValue)
-				shortenURL := fmt.Sprintf("%s/%s", host, shortenURLPath)
-
-				if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
-					w.WriteHeader(http.StatusConflict)
-					w.Write([]byte(shortenURL))
-					return
-				} else if errDataAdd != nil {
-					http.Error(w, errDataAdd.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				w.WriteHeader(http.StatusCreated)
-				w.Write([]byte(shortenURL))
-			}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+
+		shortenURLPath, errDataAdd := data.Add(string(body), userIDCookieValue)
+		shortenURL := fmt.Sprintf("%s/%s", host, shortenURLPath)
+
+		if errors.Is(errDataAdd, constants.ErrURLAlreadyExists) {
+			w.WriteHeader(http.StatusConflict)
+			w.Write([]byte(shortenURL))
+			return
+		} else if errDataAdd != nil {
+			http.Error(w, errDataAdd.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(shortenURL))
 	}
 }
 
