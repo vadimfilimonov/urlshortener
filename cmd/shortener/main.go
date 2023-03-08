@@ -19,30 +19,21 @@ func main() {
 	config := config.New()
 	config.Parse()
 
+	data, err := storage.GetStorage(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	r := chi.NewRouter()
 	r.Use(decompressMiddleware)
 	r.Use(middleware.Compress(5))
-	var data storage.Data
-	switch {
-	case config.DatabaseDNS != "":
-		err := storage.RunMigrations(config.DatabaseDNS)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		data = storage.NewDB(config.DatabaseDNS)
-	case config.FileStoragePath != "":
-		data = storage.NewFile(config.FileStoragePath)
-	default:
-		data = storage.NewMemory()
-	}
-
 	r.Get("/{shortenURL}", handler.NewGet(data, config.BaseURL))
 	r.Post("/", handler.NewPost(data, config.BaseURL))
 	r.Post("/api/shorten", handler.NewShorten(data, config.BaseURL))
 	r.Post("/api/shorten/batch", handler.NewShortenBatch(data, config.BaseURL))
 	r.Get("/api/user/urls", handler.NewUserUrls(data, config.BaseURL))
 	r.Get("/ping", handler.NewPing(config.DatabaseDNS))
-	err := http.ListenAndServe(config.ServerAddress, r)
+	err = http.ListenAndServe(config.ServerAddress, r)
 
 	if err != nil {
 		log.Fatal(err)
