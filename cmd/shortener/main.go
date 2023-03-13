@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -18,18 +19,24 @@ func main() {
 	config := config.New()
 	config.Parse()
 
+	data, err := storage.GetStorage(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	r := chi.NewRouter()
 	r.Use(decompressMiddleware)
 	r.Use(middleware.Compress(5))
-	data := storage.New(config.FileStoragePath)
-
-	r.Get("/{shortURL}", handler.New(data, config.BaseURL))
-	r.Post("/", handler.New(data, config.BaseURL))
+	r.Get("/{shortenURL}", handler.NewGet(data, config.BaseURL))
+	r.Post("/", handler.NewPost(data, config.BaseURL))
 	r.Post("/api/shorten", handler.NewShorten(data, config.BaseURL))
-	err := http.ListenAndServe(config.ServerAddress, r)
+	r.Post("/api/shorten/batch", handler.NewShortenBatch(data, config.BaseURL))
+	r.Get("/api/user/urls", handler.NewUserUrls(data, config.BaseURL))
+	r.Get("/ping", handler.NewPing(config.DatabaseDNS))
+	err = http.ListenAndServe(config.ServerAddress, r)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 

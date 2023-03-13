@@ -1,87 +1,35 @@
 package storage
 
 import (
-	"bufio"
-	"errors"
-	"fmt"
-	"os"
-	"strings"
+	"github.com/VadimFilimonov/urlshortener/internal/config"
 )
 
-type Data struct {
-	filename string
-	URLs     map[string]string
+type Data interface {
+	Get(shortenURL string) (string, error)
+	GetItemsOfUser(userID string) ([]item, error)
+	Add(originalURL, userID string) (shortenURL string, err error)
 }
 
-func New(filename string) Data {
-	if filename != "" {
-		file, _ := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-		file.Close()
-	}
-
-	return Data{
-		filename: filename,
-		URLs:     map[string]string{},
-	}
+type item struct {
+	userID      string
+	ShortenURL  string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
-func (d Data) Get(shortenURL string) (string, error) {
-	if d.filename == "" {
-		originalURL, ok := d.URLs[shortenURL]
+func GetStorage(config config.Config) (Data, error) {
+	if config.DatabaseDNS != "" {
+		err := RunMigrations(config.DatabaseDNS)
 
-		if !ok {
-			return "", errors.New("incorrect shortenURL")
+		if err != nil {
+			return nil, err
 		}
 
-		return originalURL, nil
+		return NewDB(config.DatabaseDNS), nil
 	}
 
-	data, err := os.ReadFile(d.filename)
-
-	if err != nil {
-		return "", err
+	if config.FileStoragePath != "" {
+		return NewFile(config.FileStoragePath), nil
 	}
 
-	rows := strings.Split(string(data), "\n")
-	var originalURL string
-
-	for _, row := range rows {
-		if strings.Contains(row, shortenURL) {
-			urls := strings.Split(row, " ")
-			originalURL = urls[1]
-			break
-		}
-	}
-
-	if originalURL == "" {
-		return "", errors.New("incorrect shortenURL")
-	}
-
-	return originalURL, nil
-}
-
-func (d Data) Add(originalURL, shortenURL string) bool {
-	shouldSaveURLsToMemory := d.filename == ""
-
-	if shouldSaveURLsToMemory {
-		d.URLs[shortenURL] = originalURL
-		return true
-	}
-
-	file, err := os.OpenFile(d.filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
-	if err != nil {
-		return false
-	}
-	writer := bufio.NewWriter(file)
-	data := fmt.Sprintf("%s %s\n", shortenURL, originalURL)
-	_, err = writer.Write([]byte(data))
-
-	if err != nil {
-		return false
-	}
-
-	err = writer.Flush()
-	file.Close()
-
-	return err == nil
+	return NewMemory(), nil
 }
