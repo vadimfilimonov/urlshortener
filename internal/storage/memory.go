@@ -41,7 +41,17 @@ func (items memoryItems) Add(originalURL, userID string) (string, error) {
 		userID:      userID,
 		ShortenURL:  shortenURLPath,
 		OriginalURL: originalURL,
+		status:      itemStatusCreated,
 	}
 
 	return shortenURLPath, nil
+}
+
+func (items memoryItems) Delete(ids []string, userID string) error {
+	for _, id := range ids {
+		itemCopy := items[id]
+		itemCopy.status = itemStatusDeleted
+		items[id] = itemCopy
+	}
+	return nil
 }

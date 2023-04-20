@@ -190,7 +190,7 @@ type URLData = struct {
 	OriginalURL string `json:"original_url"`
 }
 
-func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
+func NewGetUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDCookieValue := manageUserIDCookie(w, r)
 
@@ -217,6 +217,29 @@ func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http
 		}
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(response)
+	}
+}
+
+func NewDeleteUserUrls(data storage.Data) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userIDCookieValue := manageUserIDCookie(w, r)
+		body, err := io.ReadAll(r.Body)
+		defer r.Body.Close()
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		ids := make([]string, 0)
+		err = json.Unmarshal([]byte(body), &ids)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = data.Delete(ids, userIDCookieValue)
 	}
 }
 

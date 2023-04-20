@@ -31,7 +31,8 @@ func main() {
 	r.Post("/", handler.NewPost(data, config.BaseURL))
 	r.Post("/api/shorten", handler.NewShorten(data, config.BaseURL))
 	r.Post("/api/shorten/batch", handler.NewShortenBatch(data, config.BaseURL))
-	r.Get("/api/user/urls", handler.NewUserUrls(data, config.BaseURL))
+	r.Get("/api/user/urls", handler.NewGetUserUrls(data, config.BaseURL))
+	r.Delete("/api/user/urls", handler.NewDeleteUserUrls(data))
 	r.Get("/ping", handler.NewPing(config.DatabaseDNS))
 	err = http.ListenAndServe(config.ServerAddress, r)
 

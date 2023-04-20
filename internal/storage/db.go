@@ -173,3 +173,7 @@ func (data dataDB) Add(originalURL, userID string) (string, error) {
 	db.Close()
 	return shortenURLPath, nil
 }
+
+func (data dataDB) Delete(ids []string, userID string) error {
+	return nil
+}
