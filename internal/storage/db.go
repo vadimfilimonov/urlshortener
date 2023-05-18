@@ -3,14 +3,17 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
-	"github.com/VadimFilimonov/urlshortener/internal/constants"
-	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+
+	"github.com/VadimFilimonov/urlshortener/internal/constants"
+	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 )
 
 type dataDB struct {
@@ -43,6 +46,7 @@ func RunMigrations(databaseDNS string) error {
 	}
 
 	m.Up()
+	fmt.Println("Migrations completed!")
 	return db.Close()
 }
 
@@ -116,6 +120,7 @@ func (data dataDB) GetItemsOfUser(userID string) ([]item, error) {
 }
 
 func (data dataDB) Add(originalURL, userID string) (string, error) {
+	fmt.Println("Start of Add")
 	db, err := sql.Open("postgres", data.databaseDNS)
 
 	if err != nil {
@@ -132,7 +137,7 @@ func (data dataDB) Add(originalURL, userID string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	stmt, err := tx.PrepareContext(ctx, "INSERT INTO urls(user_id, shorten_url, original_url) VALUES($1,$2,$3) ON CONFLICT (original_url) DO NOTHING")
+	stmt, err := tx.PrepareContext(ctx, "INSERT INTO urls(user_id, shorten_url, original_url, status) VALUES($1,$2,$3,$4) ON CONFLICT (original_url) DO NOTHING")
 	if err != nil {
 		return "", err
 	}
@@ -140,7 +145,7 @@ func (data dataDB) Add(originalURL, userID string) (string, error) {
 
 	shortenURLPath := utils.GenerateID()
 
-	sqlResult, err := stmt.ExecContext(ctx, userID, shortenURLPath, originalURL)
+	sqlResult, err := stmt.ExecContext(ctx, userID, shortenURLPath, originalURL, itemStatusCreated)
 	if err != nil {
 		db.Close()
 		return "", err
@@ -175,5 +180,18 @@ func (data dataDB) Add(originalURL, userID string) (string, error) {
 }
 
 func (data dataDB) Delete(ids []string, userID string) error {
-	return nil
+	db, err := sql.Open("postgres", data.databaseDNS)
+
+	if err != nil {
+		db.Close()
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err = db.ExecContext(ctx, "UPDATE urls SET status = $1 WHERE user_id = $2 and shorten_url IN ($3)", itemStatusDeleted, userID, strings.Join(ids, ","))
+	db.Close()
+
+	return err
 }

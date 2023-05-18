@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,13 +10,12 @@ import (
 	"net/http"
 	"time"
 
-	"database/sql"
+	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/VadimFilimonov/urlshortener/internal/constants"
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
-	"github.com/go-chi/chi/v5"
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func NewGet(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
@@ -240,6 +240,11 @@ func NewDeleteUserUrls(data storage.Data) func(http.ResponseWriter, *http.Reques
 		}
 
 		err = data.Delete(ids, userIDCookieValue)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
