@@ -28,6 +28,11 @@ func NewGet(data storage.Data, host string) func(http.ResponseWriter, *http.Requ
 		}
 		originalURL, err := data.Get(shortenURL)
 
+		if errors.Is(err, storage.URLHasBeenDeletedErr) {
+			http.Error(w, err.Error(), http.StatusGone)
+			return
+		}
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

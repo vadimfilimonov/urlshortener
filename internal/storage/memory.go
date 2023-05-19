@@ -19,6 +19,10 @@ func (items memoryItems) Get(shortenURL string) (string, error) {
 		return "", errors.New("incorrect shortenURL")
 	}
 
+	if item.status == itemStatusDeleted {
+		return "", URLHasBeenDeletedErr
+	}
+
 	return item.OriginalURL, nil
 }
 
@@ -50,8 +54,11 @@ func (items memoryItems) Add(originalURL, userID string) (string, error) {
 func (items memoryItems) Delete(ids []string, userID string) error {
 	for _, id := range ids {
 		itemCopy := items[id]
-		itemCopy.status = itemStatusDeleted
-		items[id] = itemCopy
+
+		if itemCopy.userID == userID {
+			itemCopy.status = itemStatusDeleted
+			items[id] = itemCopy
+		}
 	}
 	return nil
 }

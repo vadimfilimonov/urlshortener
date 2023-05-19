@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"errors"
+
 	"github.com/VadimFilimonov/urlshortener/internal/config"
 )
 
@@ -22,6 +24,8 @@ const (
 	itemStatusCreated = "created"
 	itemStatusDeleted = "deleted"
 )
+
+var URLHasBeenDeletedErr = errors.New("url has been deleted")
 
 func GetStorage(config config.Config) (Data, error) {
 	if config.DatabaseDNS != "" {

@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -46,7 +45,6 @@ func RunMigrations(databaseDNS string) error {
 	}
 
 	m.Up()
-	fmt.Println("Migrations completed!")
 	return db.Close()
 }
 
@@ -66,11 +64,16 @@ func (data dataDB) Get(shortenURL string) (string, error) {
 	defer cancel()
 
 	var originalURL string
-	err = db.QueryRowContext(ctx, "SELECT original_url FROM urls WHERE shorten_url = $1 LIMIT 1", shortenURL).Scan(&originalURL)
+	var status string
+	err = db.QueryRowContext(ctx, "SELECT original_url, status FROM urls WHERE shorten_url = $1 LIMIT 1", shortenURL).Scan(&originalURL, &status)
 
 	if err != nil {
 		db.Close()
 		return "", err
+	}
+
+	if status == itemStatusDeleted {
+		return "", URLHasBeenDeletedErr
 	}
 
 	db.Close()
@@ -120,7 +123,6 @@ func (data dataDB) GetItemsOfUser(userID string) ([]item, error) {
 }
 
 func (data dataDB) Add(originalURL, userID string) (string, error) {
-	fmt.Println("Start of Add")
 	db, err := sql.Open("postgres", data.databaseDNS)
 
 	if err != nil {
