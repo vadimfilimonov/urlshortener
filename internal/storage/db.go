@@ -73,7 +73,7 @@ func (data dataDB) Get(shortenURL string) (string, error) {
 	}
 
 	if status == itemStatusDeleted {
-		return "", URLHasBeenDeletedErr
+		return "", ErrURLHasBeenDeleted
 	}
 
 	db.Close()

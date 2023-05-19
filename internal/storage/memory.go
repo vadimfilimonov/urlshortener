@@ -20,7 +20,7 @@ func (items memoryItems) Get(shortenURL string) (string, error) {
 	}
 
 	if item.status == itemStatusDeleted {
-		return "", URLHasBeenDeletedErr
+		return "", ErrURLHasBeenDeleted
 	}
 
 	return item.OriginalURL, nil
