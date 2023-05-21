@@ -29,13 +29,13 @@ var ErrURLHasBeenDeleted = errors.New("url has been deleted")
 
 func GetStorage(config config.Config) (Data, error) {
 	if config.DatabaseDNS != "" {
-		err := RunMigrations(config.DatabaseDNS)
+		db, err := InitDB(config.DatabaseDNS)
 
 		if err != nil {
 			return nil, err
 		}
 
-		return NewDB(config.DatabaseDNS), nil
+		return NewDB(db), nil
 	}
 
 	if config.FileStoragePath != "" {
