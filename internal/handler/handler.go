@@ -237,7 +237,7 @@ func NewDeleteUserUrls(data storage.Data) func(http.ResponseWriter, *http.Reques
 		}
 
 		ids := make([]string, 0)
-		err = json.Unmarshal([]byte(body), &ids)
+		err = json.Unmarshal(body, &ids)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
