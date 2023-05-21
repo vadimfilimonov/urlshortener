@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/lib/pq"
 
 	"github.com/VadimFilimonov/urlshortener/internal/constants"
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
@@ -146,7 +146,6 @@ func (data dataDB) Add(originalURL, userID string) (string, error) {
 	defer stmt.Close()
 
 	shortenURLPath := utils.GenerateID()
-
 	sqlResult, err := stmt.ExecContext(ctx, userID, shortenURLPath, originalURL, itemStatusCreated)
 	if err != nil {
 		db.Close()
@@ -192,7 +191,8 @@ func (data dataDB) Delete(ids []string, userID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err = db.ExecContext(ctx, "UPDATE urls SET status = $1 WHERE user_id = $2 and shorten_url IN ($3)", itemStatusDeleted, userID, strings.Join(ids, ","))
+	query := "UPDATE urls SET status = $1 WHERE user_id = $2 and shorten_url = ANY($3)"
+	_, err = db.ExecContext(ctx, query, itemStatusDeleted, userID, pq.Array(ids))
 	db.Close()
 
 	return err
