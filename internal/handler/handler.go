@@ -2,20 +2,21 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
-	"database/sql"
+	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/VadimFilimonov/urlshortener/internal/constants"
 	"github.com/VadimFilimonov/urlshortener/internal/storage"
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
-	"github.com/go-chi/chi/v5"
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func NewGet(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
@@ -27,6 +28,11 @@ func NewGet(data storage.Data, host string) func(http.ResponseWriter, *http.Requ
 			return
 		}
 		originalURL, err := data.Get(shortenURL)
+
+		if errors.Is(err, storage.ErrURLHasBeenDeleted) {
+			http.Error(w, err.Error(), http.StatusGone)
+			return
+		}
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -190,7 +196,7 @@ type URLData = struct {
 	OriginalURL string `json:"original_url"`
 }
 
-func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
+func NewGetUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDCookieValue := manageUserIDCookie(w, r)
 
@@ -217,6 +223,35 @@ func NewUserUrls(data storage.Data, host string) func(http.ResponseWriter, *http
 		}
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(response)
+	}
+}
+
+func NewDeleteUserUrls(data storage.Data) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userIDCookieValue := manageUserIDCookie(w, r)
+		body, err := io.ReadAll(r.Body)
+		defer r.Body.Close()
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		ids := make([]string, 0)
+		err = json.Unmarshal(body, &ids)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		go func() {
+			err = data.Delete(ids, userIDCookieValue)
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}()
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 

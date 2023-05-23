@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	utils "github.com/VadimFilimonov/urlshortener/internal/utils/generateid"
 )
 
@@ -31,17 +33,23 @@ func (d dataFile) Get(shortenURL string) (string, error) {
 
 	rows := strings.Split(string(data), "\n")
 	var originalURL string
+	var status string
 
 	for _, row := range rows {
 		if strings.Contains(row, shortenURL) {
 			columns := strings.Split(row, " ")
 			originalURL = columns[1]
+			status = columns[3]
 			break
 		}
 	}
 
 	if originalURL == "" {
 		return "", errors.New("incorrect shortenURL")
+	}
+
+	if status == itemStatusDeleted {
+		return "", ErrURLHasBeenDeleted
 	}
 
 	return originalURL, nil
@@ -64,6 +72,7 @@ func (d dataFile) GetItemsOfUser(userID string) ([]item, error) {
 				userID:      columns[2],
 				ShortenURL:  columns[0],
 				OriginalURL: columns[1],
+				status:      columns[3],
 			}
 			items = append(items, item)
 		}
@@ -79,7 +88,7 @@ func (d dataFile) Add(originalURL, userID string) (string, error) {
 	}
 	writer := bufio.NewWriter(file)
 	shortenURLPath := utils.GenerateID()
-	data := fmt.Sprintf("%s %s %s\n", shortenURLPath, originalURL, userID)
+	data := fmt.Sprintf("%s %s %s %s\n", shortenURLPath, originalURL, userID, itemStatusCreated)
 	_, err = writer.Write([]byte(data))
 
 	if err != nil {
@@ -94,4 +103,65 @@ func (d dataFile) Add(originalURL, userID string) (string, error) {
 	}
 
 	return shortenURLPath, nil
+}
+
+func (d dataFile) Delete(ids []string, userID string) error {
+	data, err := os.ReadFile(d.filename)
+
+	if err != nil {
+		return err
+	}
+
+	rows := strings.Split(string(data), "\n")
+	processedRows := make([]string, len(rows))
+
+	for index, row := range rows {
+		if row == "" {
+			continue
+		}
+
+		columns := strings.Split(row, " ")
+		shortenURL := columns[0]
+		originalURL := columns[1]
+		userIDOfOwner := columns[2]
+
+		if userID != userIDOfOwner {
+			continue
+		}
+
+		if slices.Contains(ids, shortenURL) {
+			processedRow := fmt.Sprintf("%s %s %s %s", shortenURL, originalURL, userIDOfOwner, itemStatusDeleted)
+			processedRows[index] = processedRow
+		} else {
+			processedRows[index] = row
+		}
+	}
+	processedData := []byte(strings.Join(processedRows, "\n"))
+
+	file, err := os.OpenFile(d.filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+
+	if err != nil {
+		return err
+	}
+
+	writer := bufio.NewWriter(file)
+	_, err = writer.Write(processedData)
+
+	if err != nil {
+		return err
+	}
+
+	err = writer.Flush()
+
+	if err != nil {
+		return err
+	}
+
+	err = file.Close()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
