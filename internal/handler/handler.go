@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -244,11 +245,12 @@ func NewDeleteUserUrls(data storage.Data) func(http.ResponseWriter, *http.Reques
 			return
 		}
 
-		err = data.Delete(ids, userIDCookieValue)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		go func() {
+			err = data.Delete(ids, userIDCookieValue)
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}()
 		w.WriteHeader(http.StatusAccepted)
 	}
 }
